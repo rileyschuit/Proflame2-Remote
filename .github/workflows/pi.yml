@@ -1,0 +1,81 @@
+name: pi
+
+# Tests the Pi service on every PR. Builds its linux/arm64 image natively on an arm64
+# runner: PRs build and smoke-test only, main pushes :sha-<7>, a v* tag pushes that tag.
+on:
+  pull_request:
+    paths:
+      - "pi/**"
+      - "tests/gen_burst.cpp"
+      - "libraries/Proflame2/src/Proflame2Frame.*"
+      - "Makefile"
+      - ".github/workflows/pi.yml"
+  push:
+    branches: [main]
+    tags: ["v*"]
+    paths:
+      - "pi/**"
+      - ".github/workflows/pi.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.13"
+      - run: sudo apt-get update && sudo apt-get install -y mosquitto
+      - run: pip install -e 'pi[test]'
+      - run: make pi-test
+
+  image:
+    needs: test
+    runs-on: ubuntu-24.04-arm
+    permissions:
+      contents: read
+      packages: write
+    env:
+      PUSH: ${{ github.event_name != 'pull_request' }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Build
+        run: docker build -t proflame2d:ci pi
+
+      - name: Smoke test
+        run: |
+          docker run --rm proflame2d:ci python -c "import spidev, paho.mqtt, proflame2d.service"
+          # With no settings it must stop with a config error, before it touches SPI.
+          status=0
+          docker run --rm proflame2d:ci || status=$?
+          test "$status" -eq 2
+
+      - uses: docker/login-action@v3
+        if: env.PUSH == 'true'
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      # GHCR tags can be overwritten, so never re-push one: a tag always means the same image.
+      - name: Push
+        if: env.PUSH == 'true'
+        run: |
+          image="ghcr.io/${GITHUB_REPOSITORY,,}"
+          if [[ "$GITHUB_REF" == refs/tags/v* ]]; then
+            tag="$GITHUB_REF_NAME"
+          else
+            tag="sha-${GITHUB_SHA::7}"
+          fi
+          if docker manifest inspect "$image:$tag" >/dev/null 2>&1; then
+            echo "::notice::$tag is already in GHCR, not pushing it again"
+            exit 0
+          fi
+          docker tag proflame2d:ci "$image:$tag"
+          docker push "$image:$tag"
+          echo "::notice::pushed $image:$tag"

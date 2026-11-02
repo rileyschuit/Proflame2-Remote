@@ -1,12 +1,12 @@
 # Proflame2-Remote
 
 Controls a SIT Proflame 2 gas fireplace by sending the same 315 MHz frames as its
-GTMF6L remote (FCC ID T99058404300), from an ESP32-S3 or Arduino Uno with a CC1101 radio.
-There is also a Raspberry Pi wiring schematic, but no Pi software yet.
+GTMF6L remote (FCC ID T99058404300), from an ESP32-S3, an Arduino Uno or a Raspberry Pi
+with a CC1101 radio. The Pi is the planned final build, connected to Home Assistant over MQTT.
 
 **Status: nothing has been transmitted yet.** The frames are checked against captures
-from the real remote and the rtl_433 decoder, and the sketches compile. No board has been
-built, so we don't yet know that the fireplace accepts them. Next steps are in
+from the real remote and the rtl_433 decoder, the sketches compile, and the Pi service
+passes its tests with a fake radio. No board has been built, so we don't yet know that the fireplace accepts them. Next steps are in
 [docs/notes.md](docs/notes.md).
 
 **This controls a gas appliance.** Keep the original remote within reach, keep a working
@@ -19,18 +19,21 @@ CO detector nearby, and stay next to the fireplace for every test.
 | `arduino_serial_input/` | Set levels from the serial monitor. Builds for Uno R3 and ESP32-S3. |
 | `esp32s3_mqtt_rest/` | REST, MQTT and serial, ESP32-S3 only. |
 | `libraries/Proflame2/` | Frame encoder, state and auto-off timer, CC1101 driver, serial commands. |
+| `pi/` | Pi service: MQTT, Home Assistant discovery, auto-off timer. Runs in Docker. |
 | `hardware/` | KiCad schematics, with PDF and SVG exports. |
 | `tests/` | Host tests, plus a round trip through the real rtl_433 decoder. |
 | [docs/notes.md](docs/notes.md) | What we learned, the capture, and the plan from here. |
 | [docs/protocol.md](docs/protocol.md) | On-air format and checksum. |
 | [docs/wiring.md](docs/wiring.md) | Pin tables and wiring diagrams. |
 | [docs/interfaces.md](docs/interfaces.md) | Serial commands, REST API and MQTT topics. |
+| [docs/pi_service.md](docs/pi_service.md) | The Pi service: settings, failure behaviour, testing. |
+| [docs/home_assistant.md](docs/home_assistant.md) | Connecting the Pi service to Home Assistant. |
 
 ## Schematics
 
 - ESP32-S3 (serial, MQTT, REST): [PDF](hardware/esp32s3_cc1101.pdf), [KiCad](hardware/esp32s3_cc1101.kicad_sch)
 - Uno R3 (serial only): [PDF](hardware/uno_cc1101.pdf), [KiCad](hardware/uno_cc1101.kicad_sch)
-- Raspberry Pi GPIO (wiring only so far): [PDF](hardware/rpi_cc1101.pdf), [KiCad](hardware/rpi_cc1101.kicad_sch)
+- Raspberry Pi GPIO (MQTT, Home Assistant): [PDF](hardware/rpi_cc1101.pdf), [KiCad](hardware/rpi_cc1101.kicad_sch)
 
 ![ESP32-S3 schematic](hardware/esp32s3_cc1101.svg)
 
@@ -40,9 +43,9 @@ CO detector nearby, and stay next to the fireplace for every test.
 
 ## Bill of materials
 
-You only need one build. I'd start with the ESP32-S3, because it needs no level shifter
-and it's the board that goes on to run MQTT and REST. The Pi build needs no level shifter
-either, but its software isn't written yet.
+You only need one build. The ESP32-S3 is the easiest to test with, because it has a serial
+console for setting levels by hand. The Pi is the final build and needs no level shifter
+either, but it has no serial console: you drive it over MQTT.
 
 ### Both builds
 
@@ -120,6 +123,7 @@ from the Library Manager.
 make test                          # host tests for the encoder and controller
 make roundtrip RTL_433=/path/to/rtl_433   # real decoder reads back our frames
 make compile                       # all sketch and board combinations
+make pi-test                       # Pi service; see docs/pi_service.md
 make schematics                    # regenerate KiCad files, run ERC, export (needs kicad-cli 9)
 ```
 

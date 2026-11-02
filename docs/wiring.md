@@ -109,7 +109,8 @@ same on every 40-pin Pi. Power the CC1101 from pin 17, never from the 5 V pins 2
 | Spare, for listening later | GDO0 | 18 | GPIO24 |
 | Spare, for listening later | GDO2 | 22 | GPIO25 |
 
-**Check the wiring.** No sketch runs on the Pi, and the Python below is untested. Add
+**Check the wiring.** The Python below is untested. The OPS_ansible role turns SPI on for
+you, but to check by hand, add
 `dtparam=spi=on` to `/boot/firmware/config.txt`, reboot, then read the CC1101's version
 register:
 
