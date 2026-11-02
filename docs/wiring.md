@@ -75,6 +75,55 @@ CC1101 pin, then 1.8 k from the CC1101 pin to GND. Connect MISO directly, since 
 drives from the CC1101 to the Uno. The Uno's 3.3 V high is close to its input threshold of
 3 V, so if `CC1101 NOT FOUND` shows up, suspect that link first.
 
+## Raspberry Pi
+
+Connect directly, since both sides are 3.3 V. Pin numbers are physical header pins, the
+same on every 40-pin Pi. Power the CC1101 from pin 17, never from the 5 V pins 2 and 4.
+
+```
+ Pi 40-pin header              CC1101 (315 MHz)
+ +----------------+            +-------------+
+ | 17 3V3         |---+--------| VCC     ANT |--- antenna
+ | 25 GND         |---|--+-----| GND         |
+ | 24 GPIO8 CE0   |---|--|-----| CSN         |
+ | 23 GPIO11 SCLK |---|--|-----| SCK         |
+ | 19 GPIO10 MOSI |---|--|-----| MOSI        |
+ | 21 GPIO9 MISO  |---|--|-----| MISO        |
+ | 18 GPIO24      |---|--|-----| GDO0        |  not used yet
+ | 22 GPIO25      |---|--|-----| GDO2        |  not used yet
+ +----------------+   |  |     +-------------+
+                     ===C1 100 nF
+                     ===C2 10 uF    (both at the CC1101)
+                      |  |
+                      +--+
+```
+
+| Signal | CC1101 | Pi pin | Pi GPIO |
+| --- | --- | --- | --- |
+| Power | VCC | 17 | 3V3 |
+| Ground | GND | 25 | GND |
+| Chip select | CSN | 24 | GPIO8 (CE0) |
+| Clock | SCK | 23 | GPIO11 |
+| Data out | MOSI | 19 | GPIO10 |
+| Data in | MISO | 21 | GPIO9 |
+| Spare, for listening later | GDO0 | 18 | GPIO24 |
+| Spare, for listening later | GDO2 | 22 | GPIO25 |
+
+**Check the wiring.** No sketch runs on the Pi, and the Python below is untested. Add
+`dtparam=spi=on` to `/boot/firmware/config.txt`, reboot, then read the CC1101's version
+register:
+
+```bash
+sudo apt install python3-spidev
+python3 -c "import spidev; s=spidev.SpiDev(); s.open(0,0); s.max_speed_hz=500000; print(hex(s.xfer2([0xF1,0])[1]))"
+```
+
+`0x0` or `0xff` points to a wiring problem. Other values depend on the chip revision, and
+TI parts usually report `0x14`.
+
+**Linux timing isn't a concern.** The CC1101 clocks the symbols out of its own FIFO, so the
+Pi only has to keep that FIFO topped up. It holds about 200 ms of data at 2400 symbols/s.
+
 ## Antenna
 
 Keep the antenna vertical and away from the board. Use `tx low` at first, then go up only

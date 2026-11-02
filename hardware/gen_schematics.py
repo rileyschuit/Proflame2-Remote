@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Writes the two KiCad schematics. Edit this file, not the .kicad_sch output.
+"""Writes the KiCad schematics. Edit this file, not the .kicad_sch output.
 
 Boards are drawn as blocks with a net label on each pin, which reads like the
 wiring table in docs/wiring.md. Symbols are embedded in each schematic.
@@ -103,6 +103,13 @@ UNO = Block(
      ("4", "USB", "passive")],
     [("5", "D13/SCK", "output"), ("6", "D12/MISO", "input"), ("7", "D11/MOSI", "output"),
      ("8", "D10/SS", "output")],
+)
+
+RPI = Block(
+    "proflame:Raspberry_Pi_GPIO_Header",
+    [("17", "3V3", "power_out"), ("19", "GPIO10/MOSI", "output"), ("21", "GPIO9/MISO", "input"),
+     ("23", "GPIO11/SCLK", "output"), ("25", "GND", "power_out")],
+    [("18", "GPIO24", "bidirectional"), ("22", "GPIO25", "bidirectional"), ("24", "GPIO8/CE0", "output")],
 )
 
 SHIFTER = Block(
@@ -239,8 +246,30 @@ def uno():
     sheet.write()
 
 
+def rpi():
+    sheet = Sheet("rpi_cc1101", "Raspberry Pi GPIO + CC1101 fireplace remote",
+                  ["Any 40-pin Pi. Pin numbers are physical. Not yet built. No Pi software yet."])
+    sheet.place_block(RPI, "J1", "Raspberry Pi 40-pin header", 80, 80, {
+        "17": "+3V3", "25": "GND", "19": "MOSI", "21": "MISO", "23": "SCK", "24": "CSN",
+        "18": "GDO0", "22": "GDO2",
+    })
+    sheet.place_block(CC1101, "U1", "CC1101 module, 315 MHz", 190, 80, {
+        "1": "+3V3", "2": "GND", "3": "CSN", "4": "SCK", "5": "MOSI", "6": "MISO",
+        "7": "GDO0", "8": "GDO2", "9": "ANT",
+    })
+    sheet.place_block(ANTENNA, "AE1", "315 MHz antenna", 245, 80, {"1": "ANT"})
+    sheet.place_cap("C1", "100nF", 150, 125, "+3V3", "GND")
+    sheet.place_cap("C2", "10uF", 175, 125, "+3V3", "GND")
+    sheet.note("Put C1 and C2 at the CC1101 VCC and GND pins.", 40, 115)
+    sheet.note("ANT: 315 MHz antenna, or a 23.8 cm wire on modules with a solder pad.", 40, 120)
+    sheet.note("Power from pin 17 (3.3 V), never pin 2 or 4 (5 V). Check the pin order against your module's silkscreen.", 40, 125)
+    sheet.note("Enable SPI: dtparam=spi=on in /boot/firmware/config.txt. CSN uses CE0 (/dev/spidev0.0).", 40, 130)
+    sheet.note("GDO0 and GDO2 are spare inputs, wired for listening to the real remote later.", 40, 135)
+    sheet.write()
+
+
 def write_library():
-    blocks = (CC1101, XIAO, UNO, SHIFTER, ANTENNA)
+    blocks = (CC1101, XIAO, UNO, RPI, SHIFTER, ANTENNA)
     symbols = [b.symbol() for b in blocks] + [CAP]
     body = "\n".join(symbols).replace('(symbol "proflame:', '(symbol "')
     (OUT / "proflame.kicad_sym").write_text(
@@ -256,3 +285,4 @@ if __name__ == "__main__":
     write_library()
     esp32()
     uno()
+    rpi()

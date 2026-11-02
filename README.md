@@ -2,6 +2,7 @@
 
 Controls a SIT Proflame 2 gas fireplace by sending the same 315 MHz frames as its
 GTMF6L remote (FCC ID T99058404300), from an ESP32-S3 or Arduino Uno with a CC1101 radio.
+There is also a Raspberry Pi wiring schematic, but no Pi software yet.
 
 **Status: nothing has been transmitted yet.** The frames are checked against captures
 from the real remote and the rtl_433 decoder, and the sketches compile. No board has been
@@ -29,15 +30,19 @@ CO detector nearby, and stay next to the fireplace for every test.
 
 - ESP32-S3 (serial, MQTT, REST): [PDF](hardware/esp32s3_cc1101.pdf), [KiCad](hardware/esp32s3_cc1101.kicad_sch)
 - Uno R3 (serial only): [PDF](hardware/uno_cc1101.pdf), [KiCad](hardware/uno_cc1101.kicad_sch)
+- Raspberry Pi GPIO (wiring only so far): [PDF](hardware/rpi_cc1101.pdf), [KiCad](hardware/rpi_cc1101.kicad_sch)
 
 ![ESP32-S3 schematic](hardware/esp32s3_cc1101.svg)
 
 ![Uno schematic](hardware/uno_cc1101.svg)
 
+![Raspberry Pi schematic](hardware/rpi_cc1101.svg)
+
 ## Bill of materials
 
-You only need one of the two builds. I'd start with the ESP32-S3, because it needs no
-level shifter and it's the board that goes on to run MQTT and REST.
+You only need one build. I'd start with the ESP32-S3, because it needs no level shifter
+and it's the board that goes on to run MQTT and REST. The Pi build needs no level shifter
+either, but its software isn't written yet.
 
 ### Both builds
 
@@ -64,6 +69,13 @@ level shifter and it's the board that goes on to run MQTT and REST.
 | [ ] | 1 | 4-channel BSS138 level shifter | **Required**: the CC1101 is not 5 V tolerant. See [docs/wiring.md](docs/wiring.md) for a resistor alternative. |
 | [ ] | 1 | USB-B cable | |
 
+### Raspberry Pi build
+
+| Have | Qty | Part | Notes |
+| --- | --- | --- | --- |
+| [ ] | 1 | Any Raspberry Pi with a 40-pin header | A Zero 2 W is plenty. A Zero needs its header soldered on. |
+| [ ] | 1 | microSD card and power supply | |
+
 ### For testing
 
 | Have | Qty | Part | Notes |
@@ -76,7 +88,10 @@ level shifter and it's the board that goes on to run MQTT and REST.
 arduino-cli core install arduino:avr
 arduino-cli core install esp32:esp32 \
   --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-arduino-cli lib install ArduinoJson espMqttClient
+arduino-cli lib install ArduinoJson "Async TCP"
+# espMqttClient isn't in the Library Manager. Its name there matches a different library.
+arduino-cli config set library.enable_unsafe_install true
+arduino-cli lib install --git-url https://github.com/bertmelis/espMqttClient.git#v1.7.3
 
 # Serial sketch on a Uno (swap the port for yours)
 arduino-cli compile --libraries libraries --fqbn arduino:avr:uno arduino_serial_input
@@ -95,6 +110,9 @@ arduino-cli monitor -p /dev/ttyACM0 -c baudrate=115200
 ```
 
 In the Arduino IDE, copy `libraries/Proflame2` into your sketchbook's `libraries` folder.
+For MQTT, add the [espMqttClient v1.7.3](https://github.com/bertmelis/espMqttClient/releases/tag/v1.7.3)
+zip with Sketch > Include Library > Add .ZIP Library, and install "Async TCP" by ESP32Async
+from the Library Manager.
 
 ## Tests
 

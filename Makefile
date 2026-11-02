@@ -28,7 +28,7 @@ compile:
 # Needs kicad-cli 9.
 schematics:
 	python3 hardware/gen_schematics.py
-	for s in esp32s3_cc1101 uno_cc1101; do \
+	for s in esp32s3_cc1101 uno_cc1101 rpi_cc1101; do \
 	  kicad-cli sch erc --exit-code-violations -o /tmp/$$s.rpt hardware/$$s.kicad_sch || { cat /tmp/$$s.rpt; exit 1; }; \
 	  kicad-cli sch export pdf -o hardware/$$s.pdf hardware/$$s.kicad_sch; \
 	  kicad-cli sch export svg --no-background-color --exclude-drawing-sheet -o hardware hardware/$$s.kicad_sch; \

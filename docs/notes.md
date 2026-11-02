@@ -30,7 +30,7 @@ Findings:
 - The checksum formula reproduces every err byte in the capture.
 - The encoder reproduces the worked bit string in smartfire's README.
 - The real rtl_433 decoder reads back all 115 generated test bursts, field by field.
-- Both schematics pass KiCad ERC. That only checks the drawing, not a working circuit.
+- All three schematics pass KiCad ERC. That only checks the drawing, not a working circuit.
 
 ## Not checked
 
