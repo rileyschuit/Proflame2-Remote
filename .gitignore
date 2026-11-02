@@ -4,3 +4,8 @@ tests/bin/
 *.kicad_sch-bak
 *-backups/
 fp-info-cache
+__pycache__/
+*.pyc
+.pytest_cache/
+*.egg-info/
+.venv/

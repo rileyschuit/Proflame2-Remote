@@ -50,7 +50,7 @@ Fields: `power`, `front`, `aux`, `pilot` (true/false), and `flame`, `fan`, `ligh
 The thermostat bit is left off on purpose. `GET` also returns `autoOffMinutes`,
 `autoOffRemainingS`, `radioOk` and `assumed: true`.
 
-## MQTT (`esp32s3_mqtt_rest`)
+## MQTT (`esp32s3_mqtt_rest` and the Pi service)
 
 With the default `kMqttBaseTopic` of `home/fireplace`:
 
@@ -69,6 +69,9 @@ mosquitto_sub -h broker -u fireplace -P ... -t 'home/fireplace/#' -v
 **Don't publish `set` with the retain flag.** The device refuses retained commands, so a
 stale "power on" on the broker can't relight the fireplace after a reboot. The connection
 isn't TLS, so run this only on a trusted LAN.
+
+The Pi service uses the same topics and JSON, and has no REST or serial interface. It also
+announces itself to Home Assistant; see [home_assistant.md](home_assistant.md).
 
 ## Safety behaviour
 

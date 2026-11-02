@@ -41,6 +41,23 @@ Findings:
 - Other projects report that the light and front burner don't work without the burner on,
   so a light test with the fireplace off may show nothing even when frames are good.
 
+## Final build
+
+The end result is a Raspberry Pi running [proflame2d](pi_service.md) beside zwave-js-ui on
+the Z-Wave Pi, in the crawl space next to the fireplace. It connects to Home Assistant over
+MQTT; see [home_assistant.md](home_assistant.md). Test the radio on both the ESP32-S3 and the
+Pi first. Steps 2-5 below are written for the serial sketch, and
+[pi_service.md](pi_service.md#first-test-on-the-pi) has the MQTT equivalent.
+
+Check these at the final location:
+
+- **Range.** The Z-Wave stick and the Pi itself can add noise at 315 MHz, and the crawl space
+  may have metal ducting or foil insulation.
+- **Heat and damp.** Keep the Pi and module away from the firebox and the gas line.
+- **The GPIO header.** If the Z-Wave controller is a card on the header rather than a USB
+  stick, it may cover the pins or share them. Check it against
+  [wiring.md](wiring.md#raspberry-pi).
+
 ## Plan
 
 ### 1. Get parts

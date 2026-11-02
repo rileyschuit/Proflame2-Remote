@@ -7,7 +7,7 @@ FQBN_XIAO := esp32:esp32:XIAO_ESP32S3
 FQBN_DEVKIT := esp32:esp32:esp32s3
 ARDUINO := arduino-cli compile --warnings default --libraries libraries
 
-.PHONY: test roundtrip compile schematics clean
+.PHONY: test roundtrip compile pi-test schematics clean
 
 test:
 	mkdir -p tests/bin
@@ -24,6 +24,12 @@ compile:
 	$(ARDUINO) --fqbn $(FQBN_XIAO) arduino_serial_input
 	$(ARDUINO) --fqbn $(FQBN_XIAO) esp32s3_mqtt_rest
 	$(ARDUINO) --fqbn $(FQBN_DEVKIT) esp32s3_mqtt_rest
+
+# Needs python3 with pi/ installed (pip install -e 'pi[test]') and mosquitto on the PATH.
+pi-test:
+	mkdir -p tests/bin
+	$(CXX) $(CXXFLAGS) tests/gen_burst.cpp $(FRAME) -o tests/bin/gen_burst
+	cd pi && GEN_BURST=$(CURDIR)/tests/bin/gen_burst python3 -m pytest -q
 
 # Needs kicad-cli 9.
 schematics:
