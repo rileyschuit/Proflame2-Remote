@@ -88,7 +88,7 @@ either, but its software isn't written yet.
 arduino-cli core install arduino:avr
 arduino-cli core install esp32:esp32 \
   --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-arduino-cli lib install ArduinoJson
+arduino-cli lib install ArduinoJson "Async TCP"
 # espMqttClient isn't in the Library Manager. Its name there matches a different library.
 arduino-cli config set library.enable_unsafe_install true
 arduino-cli lib install --git-url https://github.com/bertmelis/espMqttClient.git#v1.7.3
@@ -111,7 +111,8 @@ arduino-cli monitor -p /dev/ttyACM0 -c baudrate=115200
 
 In the Arduino IDE, copy `libraries/Proflame2` into your sketchbook's `libraries` folder.
 For MQTT, add the [espMqttClient v1.7.3](https://github.com/bertmelis/espMqttClient/releases/tag/v1.7.3)
-zip with Sketch > Include Library > Add .ZIP Library.
+zip with Sketch > Include Library > Add .ZIP Library, and install "Async TCP" by ESP32Async
+from the Library Manager.
 
 ## Tests
 
