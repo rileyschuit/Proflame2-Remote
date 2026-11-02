@@ -1,0 +1,6 @@
+secrets.h
+build/
+tests/bin/
+*.kicad_sch-bak
+*-backups/
+fp-info-cache

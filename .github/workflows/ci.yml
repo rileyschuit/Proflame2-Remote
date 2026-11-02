@@ -1,0 +1,36 @@
+name: ci
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+jobs:
+  host:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - run: make test
+      - name: Build rtl_433
+        run: |
+          git clone --filter=blob:none https://github.com/merbanan/rtl_433.git /tmp/rtl_433
+          git -C /tmp/rtl_433 checkout f35183aaf1d2d905d422fd70bcae4eb7349d6186
+          cmake -S /tmp/rtl_433 -B /tmp/rtl_433/build -DENABLE_RTLSDR=OFF -DENABLE_SOAPYSDR=OFF -DENABLE_OPENSSL=OFF
+          make -C /tmp/rtl_433/build -j4
+      - run: make roundtrip RTL_433=/tmp/rtl_433/build/src/rtl_433
+
+  sketches:
+    runs-on: ubuntu-24.04
+    steps:
+      - uses: actions/checkout@v4
+      - uses: arduino/setup-arduino-cli@v2
+      - name: Install cores and libraries
+        run: |
+          arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli core install arduino:avr
+          arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
+          arduino-cli lib install ArduinoJson espMqttClient
+      - run: cp esp32s3_mqtt_rest/secrets.example.h esp32s3_mqtt_rest/secrets.h
+      - run: make compile
