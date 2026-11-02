@@ -31,6 +31,8 @@ jobs:
           arduino-cli core update-index --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
           arduino-cli core install arduino:avr
           arduino-cli core install esp32:esp32 --additional-urls https://espressif.github.io/arduino-esp32/package_esp32_index.json
-          arduino-cli lib install ArduinoJson espMqttClient
+          arduino-cli lib install ArduinoJson
+          arduino-cli config set library.enable_unsafe_install true
+          arduino-cli lib install --git-url https://github.com/bertmelis/espMqttClient.git#v1.7.3
       - run: cp esp32s3_mqtt_rest/secrets.example.h esp32s3_mqtt_rest/secrets.h
       - run: make compile
